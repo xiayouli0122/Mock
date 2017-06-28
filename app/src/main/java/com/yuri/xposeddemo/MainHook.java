@@ -1,9 +1,11 @@
 package com.yuri.xposeddemo;
 
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -13,8 +15,11 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
 
+    private static final String TAG = MainHook.class.getSimpleName();
+
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
+        Log.d(TAG, "pacgeName: " + loadPackageParam.packageName);
 
         hoolMethod(TelephonyManager.class, "getDeviceId", "111111111");
 
@@ -22,14 +27,17 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private void hoolMethod(Class cls, String method, final String result) {
         try {
-            XposedHelpers.findAndHookMethod(cls, method, new Object[]{new XC_MethodHook() {
+            XposedHelpers.findAndHookMethod(cls, method, new XC_MethodHook() {
                 protected void afterHookedMethod(MethodHookParam param)
                         throws Throwable {
                     param.setResult(result);
                 }
 
-            }});
+            });
         } catch (Throwable e) {
+            e.printStackTrace();
+            Log.e(TAG, "hoolMethod: " +  e.getMessage());
+            XposedBridge.log(e);
         }
     }
 }
