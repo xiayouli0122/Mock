@@ -27,23 +27,36 @@ public class MainHook implements IXposedHookLoadPackage {
         //这里通过包名劫持每个应用，每个类
         Log.d(TAG, "TEST===============");
 
-        Log.d(TAG, "1111111111111111: ");
-        final XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "prefs");
-        hoolMethod(TelephonyManager.class, "getDeviceId", pre.getString("imei", "test111111111111"));
+        SystemPropertiesHook systemPropertiesHook = new SystemPropertiesHook();
+        XposedHelpers.findAndHookMethod("android.os.SystemProperties", loadPackageParam.classLoader,
+                "get", String.class, String.class, systemPropertiesHook);
 
-        XposedHelpers.findAndHookMethod("com.zy.mock.MainActivity", loadPackageParam.classLoader, "save", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
-                Log.d(TAG, "afterHookedMethod: ");
+//        XposedHelpers.findAndHookMethod("com.zy.mock.MainActivity", loadPackageParam.classLoader, "save", new XC_MethodHook() {
+//            @Override
+//            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+////                super.afterHookedMethod(param);
+//                Log.d(TAG, "=====>afterHookedMethod: ");
+//                XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "prefs");
+//                hoolMethod(TelephonyManager.class, "getDeviceId", pre.getString("imei", "test111111111111"));
+//            }
+//        });
 
-                hoolMethod(TelephonyManager.class, "getDeviceId", pre.getString("imei", "test111111111111"));
+        try {
+            XposedHelpers.findAndHookMethod(TelephonyManager.class, "getDeviceId", new XC_MethodHook() {
+                protected void afterHookedMethod(MethodHookParam param)
+                        throws Throwable {
+                    XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "prefs");
+                    String imei = pre.getString("imei", null);
+                    Log.d(TAG, "IMEI: " + imei);
+                    param.setResult(imei);
+                }
 
-                SystemPropertiesHook systemPropertiesHook = new SystemPropertiesHook();
-                XposedHelpers.findAndHookMethod("android.os.SystemProperties", loadPackageParam.classLoader,
-                        "get", String.class, String.class, systemPropertiesHook);
-            }
-        });
+            });
+        } catch (Throwable e) {
+            e.printStackTrace();
+            Log.e(TAG, "hoolMethod: " +  e.getMessage());
+            XposedBridge.log(e);
+        }
 
 //        if (packageName.equals("com.antutu.ABenchMark")) {
 //            Log.d(TAG, "com.antutu.ABenchMark");

@@ -94,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
         pre.edit().putString("imei", mImei).apply();
         pre.edit().putString("model", mModel).apply();
         pre.edit().putString("version", mVersion).apply();
+
+        getInfo();
     }
 
     private void setProxy() {
@@ -210,6 +212,18 @@ public class MainActivity extends AppCompatActivity {
         String model = Build.MODEL;
         Log.d(TAG, "model: " + model);
         result += "model=" + model + "\n";
+
+        String manufacturer = Build.MANUFACTURER;
+        Log.d(TAG, "manufacturer: " + manufacturer);
+        result += "manufacturer=" + manufacturer + "\n";
+
+        String product = Build.PRODUCT;
+        Log.d(TAG, "product: " + product);
+        result += "product=" + product + "\n";
+
+        String brand = Build.BRAND;
+        Log.d(TAG, "brand: " + brand);
+        result += "brand=" + brand + "\n";
 
         String release = Build.VERSION.RELEASE;
         Log.d(TAG, "release version: " + release);
