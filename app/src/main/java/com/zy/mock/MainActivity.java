@@ -1,6 +1,7 @@
-package com.yuri.xposeddemo;
+package com.zy.mock;
 
 import android.content.Context;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
@@ -24,6 +25,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 mTextView.setText(mTelephonyManager.getDeviceId());
+            }
+        });
+
+        findViewById(R.id.btn_modify).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mTextView.setText(Build.MODEL);
             }
         });
 
