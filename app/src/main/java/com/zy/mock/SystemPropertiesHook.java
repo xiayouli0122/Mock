@@ -18,7 +18,7 @@ public class SystemPropertiesHook extends XC_MethodHook {
 
     @Override
     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-        XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "deviceInfo");
+        XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "prefs");
         String methodName = param.method.getName();
         if (methodName.startsWith("get"))
         {
@@ -29,6 +29,7 @@ public class SystemPropertiesHook extends XC_MethodHook {
             XposedHelpers.setStaticObjectField(android.os.Build.class, "HARDWARE", pre.getString("hardware", "Yuri"));
             XposedHelpers.setStaticObjectField(android.os.Build.class, "RADIO", pre.getString("radio", "Yuri"));
             XposedHelpers.setStaticObjectField(android.os.Build.class, "DEVICE", pre.getString("device", "Yuri"));
+            XposedHelpers.setStaticObjectField(android.os.Build.VERSION.class, "RELEASE", pre.getString("version", "10.0"));
         }
     }
 }
