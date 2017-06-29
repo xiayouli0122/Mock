@@ -1,14 +1,13 @@
 package com.zy.mock;
 
-import android.location.GpsStatus;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.util.Random;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -32,24 +31,16 @@ public class MainHook implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         mLpp = loadPackageParam;
-        String packageName = loadPackageParam.packageName;
+        final String packageName = loadPackageParam.packageName;
         Log.d(TAG, "packageName: " + packageName);
         //这里通过包名劫持每个应用，每个类
-        Log.d(TAG, "TEST===============");
+        XposedBridge.log("handleLoadPackage:" + packageName);
 
         SystemPropertiesHook systemPropertiesHook = new SystemPropertiesHook();
         XposedHelpers.findAndHookMethod("android.os.SystemProperties", loadPackageParam.classLoader,
                 "get", String.class, String.class, systemPropertiesHook);
 
-//        XposedHelpers.findAndHookMethod("com.zy.mock.MainActivity", loadPackageParam.classLoader, "save", new XC_MethodHook() {
-//            @Override
-//            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-////                super.afterHookedMethod(param);
-//                Log.d(TAG, "=====>afterHookedMethod: ");
-//                XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "prefs");
-//                hoolMethod(TelephonyManager.class, "getDeviceId", pre.getString("imei", "test111111111111"));
-//            }
-//        });
+//        HookTool.hookMethod(android.telephony.TelephonyManager.class, "getDeviceId", SUtils.getString("imei"));
 
         try {
             XposedHelpers.findAndHookMethod(TelephonyManager.class, "getDeviceId", new XC_MethodHook() {
@@ -57,207 +48,86 @@ public class MainHook implements IXposedHookLoadPackage {
                         throws Throwable {
                     XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "prefs");
                     String imei = pre.getString("imei", null);
-                    Log.d(TAG, "IMEI: " + imei);
+                    Log.d(TAG, "=============== IMEI: " + imei);
                     param.setResult(imei);
                 }
 
             });
         } catch (Throwable e) {
             e.printStackTrace();
-            Log.e(TAG, "hoolMethod: " +  e.getMessage());
+            Log.e(TAG, "getDeviceId: " +  e.getMessage());
             XposedBridge.log(e);
         }
 
-//        if (packageName.equals("com.antutu.ABenchMark")) {
-//            Log.d(TAG, "com.antutu.ABenchMark");
-//            hoolMethod(TelephonyManager.class, "getDeviceId", pre.getString("imei", "test111111111111"));
+
+//        XposedBridge.hookAllConstructors(LocationManager.class,new XC_MethodHook() {
+//            @Override
+//            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                super.afterHookedMethod(param);
+//                Log.d(TAG, "LocationManager: param.args.length=" + param.args.length);
+//                if (param.args.length==2) {
+//                    Context context = (Context) param.args[0]; //这里的 context
+//                    XposedBridge.log(" 对 "+getProgramNameByPackageName(context)+" 模拟位置");
+//                    //把权限的检查 hook掉
+//                    XposedHelpers.findAndHookMethod(context.getClass(), "checkCallingOrSelfPermission", String.class, new XC_MethodHook() {
+//                        @Override
+//                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                            super.afterHookedMethod(param);
+//                            if (param.args[0].toString().contains("INSTALL_LOCATION_PROVIDER")){
+//                                param.setResult(PackageManager.PERMISSION_GRANTED);
+//                            }
+//                        }
+//                    });
+//                    XposedBridge.log("LocationManager : " + context.getPackageName() + " class:= " + param.args[1].getClass().toString());
+//                    //获取到  locationManagerService 主动调用 对象的 reportLocation 方法  可以去模拟提供位置信息
+//                    //这里代码中并没有涉及到主动调用
+//                    Object   locationManagerService = param.args[1];
+//                }
+//            }
+//        });
+
+        //主要代码  将系统的数据替换掉
+//        XposedHelpers.findAndHookMethod("com.android.server.LocationManagerService", mLpp.classLoader, "reportLocation", Location.class, boolean.class, new XC_MethodHook() {
+//            @Override
+//            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                super.afterHookedMethod(param);
+//                Location location = (Location) param.args[0];
+//                XposedBridge.log("实际 系统 经度"+location.getLatitude() +" 系统 纬度"+location.getLongitude() +"系统 加速度 "+location.getAccuracy());
+//                XSharedPreferences pre = new XSharedPreferences(this.getClass().getPackage().getName(), "prefs");
+//
+//                double latitude = Double.valueOf(pre.getString("lan","39.99"))+ (double) new Random().nextInt(1000) / 1000000 ;
+//                double longtitude = Double.valueOf(pre.getString("lon","116.31"))+ (double) new Random().nextInt(1000) / 1000000 ;
+//                location.setLongitude(longtitude);
+//                location.setLatitude(latitude);
+//                XposedBridge.log("hook 系统 经度"+location.getLatitude() +" 系统 纬度"+location.getLongitude() +"系统 加速度 "+location.getAccuracy());
+//
+//            }
+//        });
+
+//        if (mLpp.packageName.contains("tencent") || mLpp.packageName.contains("mark")
+//                || mLpp.packageName.contains("harsom") || mLpp.packageName.contains("baidu")){ //注意 不加包名过滤 容易把手机干的开不了机
+//            LocationHook.HookAndChange(mLpp.classLoader,0,0);
 //        }
 
-//        SystemPropertiesHook systemPropertiesHook = new SystemPropertiesHook();
-//        XposedHelpers.findAndHookMethod("android.os.SystemProperties", loadPackageParam.classLoader, "get", String.class, String.class, systemPropertiesHook);
-
-        hook_method("android.net.wifi.WifiManager", mLpp.classLoader, "getScanResults",
-                new XC_MethodHook(){
-                    /**
-                     * Android提供了基于网络的定位服务和基于卫星的定位服务两种
-                     * android.net.wifi.WifiManager的getScanResults方法
-                     * Return the results of the latest access point scan.
-                     * @return the list of access points found in the most recent scan.
-                     */
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                        //返回空，就强制让apps使用gps定位信息
-                        Log.d(TAG, "getScanResults afterHookedMethod: ");
-                        param.setResult(null);
-                    }
-                });
-
-        hook_method("android.telephony.TelephonyManager", mLpp.classLoader, "getCellLocation",
-                new XC_MethodHook(){
-                    /**
-                     * android.telephony.TelephonyManager的getCellLocation方法
-                     * Returns the current location of the device.
-                     * Return null if current location is not available.
-                     */
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                        Log.d(TAG, "getCellLocation afterHookedMethod: ");
-                        param.setResult(null);
-                    }
-                });
-
-        hook_method("android.telephony.TelephonyManager", mLpp.classLoader, "getNeighboringCellInfo",
-                new XC_MethodHook(){
-                    /**
-                     * android.telephony.TelephonyManager类的getNeighboringCellInfo方法
-                     * Returns the neighboring cell information of the device.
-                     */
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                        Log.d(TAG, "getNeighboringCellInfo afterHookedMethod: ");
-                        param.setResult(null);
-                    }
-                });
-
-        hook_methods("android.location.LocationManager", "requestLocationUpdates",
-                new XC_MethodHook() {
-                    /**
-                     * android.location.LocationManager类的requestLocationUpdates方法
-                     * 其参数有4个：
-                     * String provider, long minTime, float minDistance,LocationListener listener
-                     * Register for location updates using the named provider, and a pending intent
-                     */
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        Log.d(TAG, "requestLocationUpdates afterHookedMethod: ");
-                        if (param.args.length == 4 && (param.args[0] instanceof String)) {
-                            Log.d(TAG, "requestLocationUpdates afterHookedMethod: 22222");
-                            //位置监听器,当位置改变时会触发onLocationChanged方法
-                            LocationListener ll = (LocationListener)param.args[3];
-
-                            Class<?> clazz = LocationListener.class;
-                            Method m = null;
-                            for (Method method : clazz.getDeclaredMethods()) {
-                                if (method.getName().equals("onLocationChanged")) {
-                                    m = method;
-                                    break;
-                                }
-                            }
-
-                            try {
-                                if (m != null) {
-                                    Object[] args = new Object[1];
-                                    Location l = new Location(LocationManager.GPS_PROVIDER);
-                                    //台北经纬度:121.53407,25.077796
-                                    //116.376098,39.978437
-                                    double la=39.978437;
-                                    double lo=116.376098;
-                                    l.setLatitude(la);
-                                    l.setLongitude(lo);
-                                    args[0] = l;
-                                    m.invoke(ll, args);
-                                    XposedBridge.log("fake location: " + la + ", " + lo);
-                                }
-                            } catch (Exception e) {
-                                XposedBridge.log(e);
-                            }
-                        }
-                    }
-                });
-
-        hook_methods("android.location.LocationManager", "getGpsStatus",
-                new XC_MethodHook(){
-                    /**
-                     * android.location.LocationManager类的getGpsStatus方法
-                     * 其参数只有1个：GpsStatus status
-                     * Retrieves information about the current status of the GPS engine.
-                     * This should only be called from the {@link GpsStatus.Listener#onGpsStatusChanged}
-                     * callback to ensure that the data is copied atomically.
-                     *
-                     */
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        GpsStatus gss = (GpsStatus)param.getResult();
-                        if (gss == null)
-                            return;
-
-                        Class<?> clazz = GpsStatus.class;
-                        Method m = null;
-                        for (Method method : clazz.getDeclaredMethods()) {
-                            if (method.getName().equals("setStatus")) {
-                                if (method.getParameterTypes().length > 1) {
-                                    m = method;
-                                    break;
-                                }
-                            }
-                        }
-                        m.setAccessible(true);
-                        //make the apps belive GPS works fine now
-                        int svCount = 5;
-                        int[] prns = {1, 2, 3, 4, 5};
-                        float[] snrs = {0, 0, 0, 0, 0};
-                        float[] elevations = {0, 0, 0, 0, 0};
-                        float[] azimuths = {0, 0, 0, 0, 0};
-                        int ephemerisMask = 0x1f;
-                        int almanacMask = 0x1f;
-                        //5 satellites are fixed
-                        int usedInFixMask = 0x1f;
-                        try {
-                            if (m != null) {
-                                m.invoke(gss,svCount, prns, snrs, elevations, azimuths, ephemerisMask, almanacMask, usedInFixMask);
-                                param.setResult(gss);
-                            }
-                        } catch (Exception e) {
-                            XposedBridge.log(e);
-                        }
-                    }
-                });
-
     }
 
-    private void hoolMethod(Class cls, String method, final String result) {
-        Log.d(TAG, "IMEI: " + result);
+    /**
+     * 通过包名获取应用程序的名称。
+     * @param context
+     *            Context对象。
+     *            包名。
+     * @return 返回包名所对应的应用程序的名称。
+     */
+    public static String getProgramNameByPackageName(Context context) {
+        PackageManager pm = context.getPackageManager();
+        String name = null;
         try {
-            XposedHelpers.findAndHookMethod(cls, method, new XC_MethodHook() {
-                protected void afterHookedMethod(MethodHookParam param)
-                        throws Throwable {
-                    param.setResult(result);
-                }
-
-            });
-        } catch (Throwable e) {
+            name = pm.getApplicationLabel(
+                    pm.getApplicationInfo(context.getPackageName(),
+                            PackageManager.GET_META_DATA)).toString();
+        } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
-            Log.e(TAG, "hoolMethod: " +  e.getMessage());
-            XposedBridge.log(e);
         }
-    }
-
-
-    //不带参数的方法拦截
-    private void hook_method(String className, ClassLoader classLoader, String methodName,
-                             Object... parameterTypesAndCallback){
-        try {
-            XposedHelpers.findAndHookMethod(className, classLoader, methodName, parameterTypesAndCallback);
-        } catch (Exception e) {
-            XposedBridge.log(e);
-        }
-    }
-
-    //带参数的方法拦截
-    private void hook_methods(String className, String methodName, XC_MethodHook xmh){
-        try {
-            Class<?> clazz = Class.forName(className);
-            for (Method method : clazz.getDeclaredMethods())
-                if (method.getName().equals(methodName)
-                        && !Modifier.isAbstract(method.getModifiers())
-                        && Modifier.isPublic(method.getModifiers())) {
-                    XposedBridge.hookMethod(method, xmh);
-                }
-        } catch (Exception e) {
-            XposedBridge.log(e);
-        }
+        return name;
     }
 }

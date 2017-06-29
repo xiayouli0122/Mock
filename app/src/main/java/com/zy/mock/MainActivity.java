@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     private void showLocation(Location location){
         String locationStr = "纬度：" + location.getLatitude() + ",经度：" + location.getLongitude();
         mTextView.setText(locationStr);
-        Log.i("jw", "location:"+locationStr);
+        Log.i(TAG, "location:"+ locationStr);
     }
 
     /**
@@ -162,9 +162,13 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences pre = this.getSharedPreferences("prefs",
                 Context.MODE_WORLD_READABLE);
+        Log.d(TAG, "save.imei: " + mImei);
         pre.edit().putString("imei", mImei).apply();
         pre.edit().putString("model", mModel).apply();
         pre.edit().putString("version", mVersion).apply();
+
+        pre.edit().putString("lan", "38.2697").apply();
+        pre.edit().putString("lon", "116.8909").apply();
 
         getInfo();
     }
